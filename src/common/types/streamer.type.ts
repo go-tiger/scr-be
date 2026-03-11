@@ -1,8 +1,8 @@
-import { Streamer } from '../../common/types/streamer.type';
+export type Platform = 'chzzk' | 'soop';
 
-export class StreamerResponseDto implements Streamer {
+export interface Streamer {
   id: string;
-  platform: 'chzzk' | 'soop';
+  platform: Platform;
   channelId: string;
   name: string;
   profileImage: string;
