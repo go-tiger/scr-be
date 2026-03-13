@@ -46,11 +46,27 @@ export class ChzzkService {
 
     const live = liveRes.content;
 
+    let thumbnail: string | undefined = live.liveImageUrl?.replace('{type}', '480') ?? undefined;
+
+    if (!thumbnail) {
+      try {
+        const { data: detailRes } = await firstValueFrom(
+          this.httpService.get(
+            `${BASE_URL}/service/v2/channels/${channelId}/live-detail`,
+            { headers: HEADERS },
+          ),
+        );
+        thumbnail = detailRes.content?.liveImageUrl?.replace('{type}', '480') ?? undefined;
+      } catch {
+        // 썸네일 없이 진행
+      }
+    }
+
     return {
       ...streamer,
       title: live.liveTitle ?? undefined,
       viewerCount: live.concurrentUserCount ?? undefined,
-      thumbnail: live.liveImageUrl?.replace('{type}', '480') ?? undefined,
+      thumbnail,
       category: live.liveCategoryValue ?? undefined,
       tags: live.tags?.length ? live.tags : undefined,
     };
