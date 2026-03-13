@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Client } from '@libsql/client';
 import { LIBSQL_CLIENT } from '../database/database.module';
 import { StreamerResponseDto } from './dto/streamer.dto';
+import { Streamer } from '../common/types/streamer.type';
 import { ChzzkService } from '../platforms/chzzk/chzzk.service';
 
 @Injectable()
@@ -17,17 +18,20 @@ export class StreamersService {
 
     const results = await Promise.all(
       rows.map(async (row) => {
+        let streamer: Streamer;
         if (row.platform === 'chzzk') {
-          return this.chzzkService.getStreamer(row.channelId);
+          streamer = await this.chzzkService.getStreamer(row.channelId);
+        } else {
+          streamer = {
+            id: `soop-${row.channelId}`,
+            platform: 'soop' as const,
+            channelId: row.channelId,
+            name: row.name,
+            profileImage: '',
+            isLive: false,
+          };
         }
-        return {
-          id: `soop-${row.channelId}`,
-          platform: 'soop' as const,
-          channelId: row.channelId,
-          name: row.name,
-          profileImage: '',
-          isLive: false,
-        };
+        return { ...streamer, dbId: row.id };
       }),
     );
 

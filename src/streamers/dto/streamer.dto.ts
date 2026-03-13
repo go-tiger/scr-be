@@ -1,6 +1,7 @@
 import { Streamer } from '../../common/types/streamer.type';
 
 export class StreamerResponseDto implements Streamer {
+  dbId: number;
   id: string;
   platform: 'chzzk' | 'soop';
   channelId: string;
