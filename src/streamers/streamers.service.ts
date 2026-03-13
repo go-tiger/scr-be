@@ -1,32 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { StreamerEntity } from './streamer.entity';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { Client } from '@libsql/client';
+import { LIBSQL_CLIENT } from '../database/database.module';
 import { StreamerResponseDto } from './dto/streamer.dto';
 import { ChzzkService } from '../platforms/chzzk/chzzk.service';
 
 @Injectable()
 export class StreamersService {
   constructor(
-    @InjectRepository(StreamerEntity)
-    private readonly streamerRepo: Repository<StreamerEntity>,
+    @Inject(LIBSQL_CLIENT) private readonly db: Client,
     private readonly chzzkService: ChzzkService,
   ) {}
 
   async findAll(): Promise<StreamerResponseDto[]> {
-    const entities = await this.streamerRepo.find();
+    const result = await this.db.execute('SELECT * FROM streamers');
+    const rows = result.rows as unknown as { id: number; platform: 'chzzk' | 'soop'; channelId: string; name: string }[];
 
     const results = await Promise.all(
-      entities.map(async (entity) => {
-        if (entity.platform === 'chzzk') {
-          return this.chzzkService.getStreamer(entity.channelId);
+      rows.map(async (row) => {
+        if (row.platform === 'chzzk') {
+          return this.chzzkService.getStreamer(row.channelId);
         }
-        // SOOP 미구현 — 오프라인 플레이스홀더 반환
         return {
-          id: `soop-${entity.channelId}`,
+          id: `soop-${row.channelId}`,
           platform: 'soop' as const,
-          channelId: entity.channelId,
-          name: entity.name,
+          channelId: row.channelId,
+          name: row.name,
           profileImage: '',
           isLive: false,
         };
@@ -36,14 +34,20 @@ export class StreamersService {
     return results;
   }
 
-  async create(dto: { platform: 'chzzk' | 'soop'; channelId: string; name: string }): Promise<StreamerEntity> {
-    const entity = this.streamerRepo.create(dto);
-    return this.streamerRepo.save(entity);
+  async create(dto: { platform: 'chzzk' | 'soop'; channelId: string; name: string }): Promise<{ id: number }> {
+    const result = await this.db.execute({
+      sql: 'INSERT INTO streamers (platform, channelId, name) VALUES (?, ?, ?)',
+      args: [dto.platform, dto.channelId, dto.name],
+    });
+    return { id: Number(result.lastInsertRowid) };
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.streamerRepo.delete(id);
-    if (result.affected === 0) {
+    const result = await this.db.execute({
+      sql: 'DELETE FROM streamers WHERE id = ?',
+      args: [id],
+    });
+    if (result.rowsAffected === 0) {
       throw new NotFoundException(`Streamer with id ${id} not found`);
     }
   }
