@@ -21,6 +21,9 @@ export class ChzzkService {
     );
 
     const channel = channelRes.content;
+    if (!channel) {
+      throw new Error(`존재하지 않는 CHZZK 채널 ID: ${channelId}`);
+    }
     const isLive: boolean = channel.openLive ?? false;
 
     const streamer: Streamer = {

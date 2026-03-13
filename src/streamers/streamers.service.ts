@@ -38,7 +38,7 @@ export class StreamersService {
     let name: string;
     if (dto.platform === 'chzzk') {
       const streamer = await this.chzzkService.getStreamer(dto.channelId);
-      name = streamer.name;
+      name = streamer.name ?? dto.channelId;
     } else {
       name = dto.channelId;
     }
