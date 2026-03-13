@@ -11,7 +11,7 @@ export class StreamersController {
   }
 
   @Post()
-  create(@Body() body: { platform: 'chzzk' | 'soop'; channelId: string; name: string }) {
+  create(@Body() body: { platform: 'chzzk' | 'soop'; channelId: string }) {
     return this.streamersService.create(body);
   }
 

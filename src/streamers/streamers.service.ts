@@ -34,10 +34,17 @@ export class StreamersService {
     return results;
   }
 
-  async create(dto: { platform: 'chzzk' | 'soop'; channelId: string; name: string }): Promise<{ id: number }> {
+  async create(dto: { platform: 'chzzk' | 'soop'; channelId: string }): Promise<{ id: number }> {
+    let name: string;
+    if (dto.platform === 'chzzk') {
+      const streamer = await this.chzzkService.getStreamer(dto.channelId);
+      name = streamer.name;
+    } else {
+      name = dto.channelId;
+    }
     const result = await this.db.execute({
       sql: 'INSERT INTO streamers (platform, channelId, name) VALUES (?, ?, ?)',
-      args: [dto.platform, dto.channelId, dto.name],
+      args: [dto.platform, dto.channelId, name],
     });
     return { id: Number(result.lastInsertRowid) };
   }
