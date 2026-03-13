@@ -52,6 +52,7 @@ export class ChzzkService {
       viewerCount: live.concurrentUserCount ?? undefined,
       thumbnail: live.liveImageUrl?.replace('{type}', '480') ?? undefined,
       category: live.liveCategoryValue ?? undefined,
+      tags: live.tags?.length ? live.tags : undefined,
     };
   }
 }

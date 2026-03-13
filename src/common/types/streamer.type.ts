@@ -12,4 +12,5 @@ export interface Streamer {
   viewerCount?: number;
   broadNo?: number;
   category?: string;
+  tags?: string[];
 }
