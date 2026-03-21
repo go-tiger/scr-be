@@ -44,6 +44,7 @@ export class SoopService {
     if (!isLive) return streamer;
 
     let tags: string[] | undefined;
+    let category: string | undefined;
     try {
       const params = new URLSearchParams({
         bid: channelId,
@@ -70,11 +71,10 @@ export class SoopService {
         ),
       );
       const ch = liveData?.CHANNEL;
-      const allTags = [
-        ...(ch?.HASH_TAGS ?? []),
-        ...(ch?.CATEGORY_TAGS ?? []),
-      ];
-      if (allTags.length) tags = allTags;
+      const categoryTags: string[] = ch?.CATEGORY_TAGS ?? [];
+      if (categoryTags.length) category = categoryTags[0];
+      const hashTags: string[] = ch?.HASH_TAGS ?? [];
+      if (hashTags.length) tags = hashTags;
     } catch {
       // 태그 없이 진행
     }
@@ -85,6 +85,7 @@ export class SoopService {
       viewerCount: broad.current_sum_viewer ?? undefined,
       thumbnail: `https://liveimg.sooplive.co.kr/m/${broad.broad_no}`,
       broadNo: broad.broad_no ?? undefined,
+      category,
       tags,
     };
   }
