@@ -4,12 +4,14 @@ import { LIBSQL_CLIENT } from '../database/database.module';
 import { StreamerResponseDto } from './dto/streamer.dto';
 import { Streamer } from '../common/types/streamer.type';
 import { ChzzkService } from '../platforms/chzzk/chzzk.service';
+import { SoopService } from '../platforms/soop/soop.service';
 
 @Injectable()
 export class StreamersService {
   constructor(
     @Inject(LIBSQL_CLIENT) private readonly db: Client,
     private readonly chzzkService: ChzzkService,
+    private readonly soopService: SoopService,
   ) {}
 
   async findAll(): Promise<StreamerResponseDto[]> {
@@ -22,14 +24,7 @@ export class StreamersService {
         if (row.platform === 'chzzk') {
           streamer = await this.chzzkService.getStreamer(row.channelId);
         } else {
-          streamer = {
-            id: `soop-${row.channelId}`,
-            platform: 'soop' as const,
-            channelId: row.channelId,
-            name: row.name,
-            profileImage: '',
-            isLive: false,
-          };
+          streamer = await this.soopService.getStreamer(row.channelId);
         }
         return { ...streamer, dbId: row.id };
       }),
@@ -44,7 +39,8 @@ export class StreamersService {
       const streamer = await this.chzzkService.getStreamer(dto.channelId);
       name = streamer.name ?? dto.channelId;
     } else {
-      name = dto.channelId;
+      const streamer = await this.soopService.getStreamer(dto.channelId);
+      name = streamer.name ?? dto.channelId;
     }
     const result = await this.db.execute({
       sql: 'INSERT INTO streamers (platform, channelId, name) VALUES (?, ?, ?)',
