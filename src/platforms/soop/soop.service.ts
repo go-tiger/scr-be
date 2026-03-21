@@ -25,8 +25,8 @@ export class SoopService {
       throw new Error(`존재하지 않는 SOOP 채널 ID: ${channelId}`);
     }
 
-    const profileImage = station.user_info?.profile_image
-      ? `https:${station.user_info.profile_image}`
+    const profileImage = data.profile_image
+      ? `https:${data.profile_image}`
       : '';
 
     const broad = data.broad ?? null;
@@ -36,7 +36,7 @@ export class SoopService {
       id: `soop-${channelId}`,
       platform: 'soop',
       channelId,
-      name: station.user_info?.nickname ?? channelId,
+      name: station.user_nick ?? channelId,
       profileImage,
       isLive,
     };
