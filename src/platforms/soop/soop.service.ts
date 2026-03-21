@@ -43,12 +43,49 @@ export class SoopService {
 
     if (!isLive) return streamer;
 
+    let tags: string[] | undefined;
+    try {
+      const params = new URLSearchParams({
+        bid: channelId,
+        bno: String(broad.broad_no),
+        type: 'live',
+        pwd: '',
+        player_type: 'html5',
+        stream_type: 'common',
+        quality: 'HD',
+        mode: 'landing',
+        from_api: '0',
+        is_revive: 'false',
+      });
+      const { data: liveData } = await firstValueFrom(
+        this.httpService.post(
+          'https://live.sooplive.co.kr/afreeca/player_live_api.php',
+          params.toString(),
+          {
+            headers: {
+              ...HEADERS,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          },
+        ),
+      );
+      const ch = liveData?.CHANNEL;
+      const allTags = [
+        ...(ch?.HASH_TAGS ?? []),
+        ...(ch?.CATEGORY_TAGS ?? []),
+      ];
+      if (allTags.length) tags = allTags;
+    } catch {
+      // 태그 없이 진행
+    }
+
     return {
       ...streamer,
       title: broad.broad_title ?? undefined,
       viewerCount: broad.current_sum_viewer ?? undefined,
       thumbnail: `https://liveimg.sooplive.co.kr/m/${broad.broad_no}`,
       broadNo: broad.broad_no ?? undefined,
+      tags,
     };
   }
 }
