@@ -37,38 +37,45 @@ export class ChzzkService {
 
     if (!isLive) return streamer;
 
-    const { data: liveRes } = await firstValueFrom(
-      this.httpService.get(
-        `${BASE_URL}/polling/v2/channels/${channelId}/live-status`,
-        { headers: HEADERS },
-      ),
-    );
+    try {
+      const { data: liveRes } = await firstValueFrom(
+        this.httpService.get(
+          `${BASE_URL}/polling/v2/channels/${channelId}/live-status`,
+          { headers: HEADERS },
+        ),
+      );
 
-    const live = liveRes.content;
+      if (liveRes.code === 9004) return { ...streamer, isGeoBlocked: true };
 
-    let thumbnail: string | undefined = live.liveImageUrl?.replace('{type}', '480') ?? undefined;
+      const live = liveRes.content;
 
-    if (!thumbnail) {
-      try {
-        const { data: detailRes } = await firstValueFrom(
-          this.httpService.get(
-            `${BASE_URL}/service/v2/channels/${channelId}/live-detail`,
-            { headers: HEADERS },
-          ),
-        );
-        thumbnail = detailRes.content?.liveImageUrl?.replace('{type}', '480') ?? undefined;
-      } catch {
-        // 썸네일 없이 진행
+      let thumbnail: string | undefined = live.liveImageUrl?.replace('{type}', '480') ?? undefined;
+
+      if (!thumbnail) {
+        try {
+          const { data: detailRes } = await firstValueFrom(
+            this.httpService.get(
+              `${BASE_URL}/service/v2/channels/${channelId}/live-detail`,
+              { headers: HEADERS },
+            ),
+          );
+          thumbnail = detailRes.content?.liveImageUrl?.replace('{type}', '480') ?? undefined;
+        } catch {
+          // 썸네일 없이 진행
+        }
       }
-    }
 
-    return {
-      ...streamer,
-      title: live.liveTitle ?? undefined,
-      viewerCount: live.concurrentUserCount ?? undefined,
-      thumbnail,
-      category: live.liveCategoryValue ?? undefined,
-      tags: live.tags?.length ? live.tags : undefined,
-    };
+      return {
+        ...streamer,
+        title: live.liveTitle ?? undefined,
+        viewerCount: live.concurrentUserCount ?? undefined,
+        thumbnail,
+        category: live.liveCategoryValue ?? undefined,
+        tags: live.tags?.length ? live.tags : undefined,
+      };
+    } catch {
+      // 해외 차단 등 라이브 정보 조회 실패 시 기본 정보만 반환
+      return streamer;
+    }
   }
 }
