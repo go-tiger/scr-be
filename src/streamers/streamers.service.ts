@@ -30,7 +30,7 @@ export class StreamersService {
       }),
     );
 
-    return results;
+    return results.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }
 
   async create(dto: { platform: 'chzzk' | 'soop'; channelId: string }): Promise<{ id: number }> {
